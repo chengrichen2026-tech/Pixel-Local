@@ -1,0 +1,68 @@
+{
+  "name": "pixel-local",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local-first marketing image editor with optional Codex MCP automation.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chengrichen2026-tech/Pixel-Local.git"
+  },
+  "homepage": "https://github.com/chengrichen2026-tech/Pixel-Local#readme",
+  "bugs": {
+    "url": "https://github.com/chengrichen2026-tech/Pixel-Local/issues"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "bridge:start": "node tools/pixel-local-bridge/daemon.mjs",
+    "bridge:install": "zsh scripts/pixel-local-bridge-launchd.sh install",
+    "bridge:status": "zsh scripts/pixel-local-bridge-launchd.sh status",
+    "bridge:uninstall": "zsh scripts/pixel-local-bridge-launchd.sh uninstall",
+    "pixel:verify": "zsh ops/pixel-local/scripts/verify.sh",
+    "pixel:skill:check": "zsh ops/pixel-local/scripts/sync-skill.sh --check",
+    "pixel:skill:sync": "zsh ops/pixel-local/scripts/sync-skill.sh --apply",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "test:bridge": "node --test tests/pixel-local-bridge.test.mjs",
+    "test:sidebar": "node --test tests/pixel-local-sidebar-command.test.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "@tabler/icons-react": "^3.46.0",
+    "drizzle-orm": "0.45.2",
+    "fabric": "^7.4.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.37.1",
+    "@eslint/js": "9.39.4",
+    "@next/eslint-plugin-next": "16.2.6",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "drizzle-kit": "0.31.10",
+    "eslint": "9.39.4",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "16.4.0",
+    "react-server-dom-webpack": "19.2.6",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.59.3",
+    "vinext": "1.0.0-beta.2",
+    "vite": "8.0.13",
+    "wrangler": "4.92.0"
+  },
+  "type": "module"
+}

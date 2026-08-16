@@ -1,0 +1,5 @@
+# 安装目标：Codex 全局 config.toml
+# PROJECT_DIR 必须替换为本机当前项目绝对路径；不要在此文件放凭据。
+[mcp_servers.pixel-local-editor]
+command = "node"
+args = ["PROJECT_DIR/tools/pixel-local-mcp/server.mjs"]

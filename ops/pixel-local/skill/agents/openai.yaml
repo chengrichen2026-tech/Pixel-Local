@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pixel Local 编辑器"
+  short_description: "直接读取和修改 Pixel Local 图片编辑器画布"
+  default_prompt: "使用 $pixel-local-editor 读取当前图片模板并按要求修改后导出。"
