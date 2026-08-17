@@ -1,4 +1,0 @@
-interface:
-  display_name: "文档转信息图"
-  short_description: "将文档转成可实时编辑并可自定义尺寸导出 JPG 的高清信息图"
-  default_prompt: "使用 $doc-to-infographic 将这份文档制作成可实时编辑并可自定义尺寸导出 JPG 的高清信息图。"

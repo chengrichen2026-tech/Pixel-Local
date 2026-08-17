@@ -125,28 +125,6 @@ npm run start
 
 完整画布命令见 [Command API](COMMAND_API.md)。安装与运维结构见 [Pixel Local 运维入口](ops/pixel-local/README.md)。
 
-## 随仓库提供的其他 Skills
-
-### doc-to-infographic
-
-`skills/doc-to-infographic/` 是一套独立的“文档转可编辑信息图”Skill，包含完整模板、构建/渲染/文字校验/浏览器 QA 脚本、参考资料和离线 html2canvas 依赖。它不会替换或干扰 Pixel Local 主 Skill。
-
-安装到 Codex：
-
-```bash
-mkdir -p ~/.codex/skills
-cp -R skills/doc-to-infographic ~/.codex/skills/doc-to-infographic
-```
-
-Windows PowerShell：
-
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
-Copy-Item -Recurse -Force "skills\doc-to-infographic" "$env:USERPROFILE\.codex\skills\doc-to-infographic"
-```
-
-安装后新建 Codex 任务，并用 `$doc-to-infographic` 调用。该 Skill 的浏览器 QA 需要 Chrome/Chromium；完整交互式 JPG QA 还需要可用的 Playwright 包。第三方依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
 ## 安全与数据边界
 
 - Bridge 仅监听 `127.0.0.1:43127`，不要暴露到公网。
