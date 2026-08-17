@@ -32,6 +32,7 @@ const isolatedEnv = async () => {
     PIXEL_LOCAL_SKILL_DIR: skill,
     PIXEL_LOCAL_SKIP_DEPENDENCIES: "1",
     PIXEL_LOCAL_SKIP_SERVICE: "1",
+    PIXEL_LOCAL_SKIP_BRIDGE: "1",
     PIXEL_LOCAL_SKIP_EDITOR: "1",
     PIXEL_LOCAL_PLATFORM: "linux",
   } };
@@ -81,6 +82,7 @@ test("doctor distinguishes failed installation from a ready canvas", async () =>
   const failedReport = JSON.parse(failed.stdout);
   assert.equal(failedReport.ok, false);
   assert.equal(failedReport.checks.find((item) => item.name === "canvas").status, "fail");
+  assert.match(failedReport.checks.find((item) => item.name === "bridge").fix, /bridge:ensure/);
 
   const ready = await isolatedEnv();
   await writeFile(ready.config, "[ui]\ntheme = \"light\"\n");

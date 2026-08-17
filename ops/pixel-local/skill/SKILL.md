@@ -13,9 +13,10 @@ When the user explicitly asks to open or view Pixel Local in the Codex sidebar o
 
 ## Connection preflight
 
-1. If the tools are unavailable or `editor_status` fails, tell the user to run `npm run doctor` in the Pixel Local checkout. Do not claim the integration is installed merely because config files exist.
+1. If the tools are unavailable or `editor_status` fails, run `npm run doctor` in the Pixel Local checkout. Do not claim the integration is installed merely because config files exist.
 2. Require a ready Bridge, a running editor service, a connected primary canvas, and Pixel Local MCP tools in the current Codex task before editing.
-3. If setup is incomplete, use `npm run setup:codex` to preview the installation plan. Run it with `-- --apply` only after the user authorizes changes to their Codex config and local services. A new Codex task is required after installation.
+3. If Bridge is missing on Windows or Linux, run `npm run bridge:ensure`, wait for health, then rerun `npm run doctor` and `editor_status`. This starts only a project-tracked background process; never register system startup or change global system settings. On macOS, preserve the LaunchAgent flow through `npm run bridge:install` or the authorized setup installer.
+4. If setup is incomplete, use `npm run setup:codex` to preview the installation plan. Run it with `-- --apply` only after the user authorizes changes to their Codex config and local services. A new Codex task is required after installation.
 
 ## Workflow
 
@@ -40,4 +41,4 @@ Use `frame.sidebarCollapse` to collapse or expand one Frame or all Frames in the
 
 ## Connection
 
-The MCP server is registered as `pixel-local-editor`. The persistent bridge is managed separately by launchd. The editor connects to it while its page is open.
+The MCP server is registered as `pixel-local-editor`. macOS can keep Bridge alive with LaunchAgent; Windows and Linux use the project-tracked managed background process. The editor connects while its page is open.

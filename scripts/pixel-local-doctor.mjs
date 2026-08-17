@@ -5,8 +5,10 @@ import {
   bridgeUrl, configPath, dependenciesReady, editorStatus, exists, fetchStatus, launchAgentPath,
   mcpBlock, mcpServerPath, nodeVersionOk, platform, skillIsSynchronized,
 } from "./pixel-local-install-lib.mjs";
+import { ensureManagedBridge, managedBridgeStatus } from "./pixel-local-bridge-process.mjs";
 
 const jsonOutput = process.argv.includes("--json");
+const repair = process.argv.includes("--repair");
 const checks = [];
 const add = (name, status, detail, fix = null) => checks.push({ name, status, detail, ...(fix ? { fix } : {}) });
 
@@ -19,11 +21,18 @@ const main = async () => {
   const configOk = expected.every((line) => config.includes(line));
   add("mcp-config", configOk ? "ok" : "fail", configPath(), "Run npm run setup:codex -- --apply.");
   add("mcp-server", await exists(mcpServerPath()) ? "ok" : "fail", mcpServerPath(), "Restore the repository checkout.");
+  let bridge = await fetchStatus(`${bridgeUrl()}/health`, "json");
+  if (!bridge.ok && repair && platform() !== "darwin") {
+    try { await ensureManagedBridge(); bridge = await fetchStatus(`${bridgeUrl()}/health`, "json"); }
+    catch { /* report the failed health check and repair command below */ }
+  }
   if (platform() === "darwin") {
     add("bridge-service", await exists(launchAgentPath()) ? "ok" : "fail", launchAgentPath(), "Run npm run bridge:install.");
-  } else add("bridge-service", "manual", "No bundled persistent service for this OS.", "Keep npm run bridge:start running in another terminal.");
-  const bridge = await fetchStatus(`${bridgeUrl()}/health`, "json");
-  add("bridge", bridge.ok ? "ok" : "fail", bridge.ok ? "Bridge is responding" : "Bridge is not responding", platform() === "darwin" ? "Run npm run bridge:install." : "Keep npm run bridge:start running in another terminal.");
+  } else {
+    const managed = await managedBridgeStatus();
+    add("bridge-service", managed.running ? "ok" : bridge.ok ? "manual" : "fail", managed.running ? `Managed background PID ${managed.record.pid}; log: ${managed.logFile}` : bridge.ok ? "Bridge is healthy but not tracked by this checkout." : "No managed Bridge process is running.", "Run npm run bridge:ensure.");
+  }
+  add("bridge", bridge.ok ? "ok" : "fail", bridge.ok ? "Bridge is responding" : "Bridge is not responding", platform() === "darwin" ? "Run npm run bridge:install." : "Run npm run bridge:ensure, or npm run doctor -- --repair.");
   const editor = await editorStatus();
   add("editor", editor.ok ? "ok" : "fail", editor.ok ? `Pixel Local HTTP ${editor.status}` : "Pixel Local editor is not responding or the port belongs to another service", "Run npm run dev.");
   const ready = Boolean(bridge.ok && bridge.body?.ready && bridge.body?.connectedClients?.length);

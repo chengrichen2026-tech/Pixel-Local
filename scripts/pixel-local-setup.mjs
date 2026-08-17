@@ -8,6 +8,7 @@ import {
   PROJECT_DIR, backupAndWriteConfig, configPath, dependenciesReady,
   editorStatus, editorUrl, installSkill, nodeVersionOk, platform, skillIsSynchronized, skillTarget,
 } from "./pixel-local-install-lib.mjs";
+import { ensureManagedBridge } from "./pixel-local-bridge-process.mjs";
 
 const args = new Set(process.argv.slice(2));
 const apply = args.has("--apply");
@@ -46,7 +47,7 @@ const main = async () => {
   console.log(`Dependencies: ${dependencies ? "ready" : apply ? "will install with npm ci" : "missing; npm ci would run"}`);
   console.log(`Skill target: ${skillTarget()}${await skillIsSynchronized() ? " (already synchronized)" : ""}`);
   console.log(`MCP config: ${configPath()}`);
-  console.log(`Bridge: ${platform() === "darwin" ? "macOS LaunchAgent" : "foreground command: npm run bridge:start"}`);
+  console.log(`Bridge: ${platform() === "darwin" ? "macOS LaunchAgent" : "project-managed background process"}`);
   console.log(`Editor: ${editorUrl()}`);
   if (!apply) {
     console.log("No changes made. Re-run with --apply to install.");
@@ -57,7 +58,11 @@ const main = async () => {
   const config = await backupAndWriteConfig();
   console.log(config.changed ? `MCP config updated${config.backup ? `; backup: ${config.backup}` : ""}.` : "MCP config already current.");
   if (platform() === "darwin" && process.env.PIXEL_LOCAL_SKIP_SERVICE !== "1") run("zsh", ["scripts/pixel-local-bridge-launchd.sh", "install"]);
-  else if (platform() !== "darwin") console.log("Keep Bridge running in another terminal: npm run bridge:start");
+  else if (platform() !== "darwin" && process.env.PIXEL_LOCAL_SKIP_BRIDGE !== "1") {
+    const bridge = await ensureManagedBridge();
+    console.log(bridge.started ? `Bridge started in background (PID ${bridge.pid}); log: ${bridge.logFile}` : "Bridge already healthy; no duplicate process started.");
+  }
+  else if (platform() !== "darwin") console.log("Bridge background start skipped by environment.");
   else console.log("Bridge service installation skipped by environment.");
   console.log(`Editor ${await startEditor()}.`);
   console.log("Installation files are ready. Close and reopen Codex or create a new Codex task, then run: npm run doctor");

@@ -22,6 +22,8 @@ npm run doctor
 
 `setup:codex` 默认 dry-run；`--apply` 才同步 Skill、备份/更新 MCP 配置并处理本地服务。`doctor` 分开验证配置、服务与真实画布连接。
 
+Windows/Linux 使用 `npm run bridge:ensure` 管理项目内后台 Bridge，并通过 `bridge:managed-status`、`bridge:logs`、`bridge:stop-managed` 查看或停止；不注册系统自启动。macOS 继续使用 LaunchAgent。
+
 修改 `skill/` 或 `COMMAND_API.md` 后，先查看差异；确认后才同步：
 
 ```bash

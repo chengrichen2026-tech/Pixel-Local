@@ -31,13 +31,21 @@ npm run doctor
 
 ### Windows / Linux
 
-安装器会配置 Skill 与 MCP，并尝试启动编辑器。Bridge 暂无系统常驻安装器，需要在另一个终端保持运行：
+安装器会配置 Skill 与 MCP、启动编辑器，并在 Bridge 不健康时启动项目内可追踪的后台 Bridge。健康实例会直接复用，重复安装不会启动第二份进程。
 
 ```bash
-npm run bridge:start
+npm run bridge:ensure
+npm run bridge:managed-status
+npm run bridge:logs
 ```
 
-随后重新运行 `npm run doctor`。
+PID 与日志保存在本地 `.runtime/`。该方式不会安装 Windows 服务、注册开机启动或修改全局系统设置。停止项目管理的 Bridge：
+
+```bash
+npm run bridge:stop-managed
+```
+
+Bridge 停止或 Doctor 报错时，可运行 `npm run doctor -- --repair` 自动尝试安全启动，然后再次检查。
 
 ## 只使用编辑器，不安装 Codex
 
@@ -74,6 +82,8 @@ npm run dev
 
 检查器不会把“配置文件存在”误报为“真实画布可用”。
 
+在 Windows/Linux 上，`npm run doctor -- --repair` 可以在 Bridge 缺失时调用同一安全后台入口；macOS 仍使用 LaunchAgent，不会被改成临时后台进程。
+
 ## 修复与卸载
 
 重复执行安装是安全的：配置相同时不会重复写入，也不会重复创建备份。
@@ -88,6 +98,12 @@ macOS 停止并移除 Bridge 常驻服务：
 
 ```bash
 npm run bridge:uninstall
+```
+
+Windows/Linux 停止本项目启动的后台 Bridge：
+
+```bash
+npm run bridge:stop-managed
 ```
 
 完全移除 Codex 集成时，还需从 Codex 配置中删除 `[mcp_servers.pixel-local-editor]` 段，并移除 Codex skills 目录下的 `pixel-local-editor`。安装器在修改已有配置前会生成带时间戳的备份，可用于恢复。删除前请关闭相关 Codex 任务；仓库、浏览器画布与 `.pixel.json` 不会被卸载命令删除。
