@@ -15,9 +15,12 @@
 ## 日常操作
 
 ```bash
-npm run pixel:verify
-npm run pixel:skill:check
+npm run setup:codex
+npm run setup:codex -- --apply
+npm run doctor
 ```
+
+`setup:codex` 默认 dry-run；`--apply` 才同步 Skill、备份/更新 MCP 配置并处理本地服务。`doctor` 分开验证配置、服务与真实画布连接。
 
 修改 `skill/` 或 `COMMAND_API.md` 后，先查看差异；确认后才同步：
 
@@ -30,7 +33,7 @@ npm run pixel:skill:sync
 ## 完整验收链
 
 1. `npm run build`
-2. `npm run test:bridge`
-3. `npm run pixel:verify`
+2. `npm test`
+3. `npm run doctor`
 4. 新 Codex 任务中确认 MCP 工具与 `get_state`
 5. 涉及画布交互时，再做真实浏览器操作验证

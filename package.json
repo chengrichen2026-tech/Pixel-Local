@@ -23,6 +23,8 @@
     "bridge:install": "zsh scripts/pixel-local-bridge-launchd.sh install",
     "bridge:status": "zsh scripts/pixel-local-bridge-launchd.sh status",
     "bridge:uninstall": "zsh scripts/pixel-local-bridge-launchd.sh uninstall",
+    "setup:codex": "node scripts/pixel-local-setup.mjs",
+    "doctor": "node scripts/pixel-local-doctor.mjs",
     "pixel:verify": "zsh ops/pixel-local/scripts/verify.sh",
     "pixel:skill:check": "zsh ops/pixel-local/scripts/sync-skill.sh --check",
     "pixel:skill:sync": "zsh ops/pixel-local/scripts/sync-skill.sh --apply",
