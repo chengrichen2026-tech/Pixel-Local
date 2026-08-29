@@ -3,6 +3,7 @@
 ## 产品定位
 
 - 本目录是 Pixel Local 的正式开发目录；目录名虽然是“营销图片编辑器”，产品名统一使用 Pixel Local。
+- 本产品归属于父项目 `Project_07_Pixel创意工具`。
 - Pixel Local 是本地优先的营销图片编辑器，也提供 Codex Skill、MCP Server 和 Bridge 来操作真实画布。
 - 先遵守项目根目录 `AGENTS.md`，再遵守本文件。
 
