@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 
 const BRIDGE_URL = process.env.PIXEL_LOCAL_BRIDGE_URL || "http://127.0.0.1:43127";
+const EDITOR_URL = process.env.PIXEL_LOCAL_EDITOR_URL || "http://localhost:3000/";
 
 const bridgeRequest = async (pathname, options = {}) => {
   let response;
@@ -43,7 +44,7 @@ const targetProperties = {
   projectId: { type: "string", description: "Optional exact Pixel Local project id." },
 };
 const tools = [
-  { name: "open_editor", description: "Open the bundled Pixel Local editor in the default browser.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+  { name: "open_editor", description: "Open Pixel Local in the default browser. Pass extensionId to open the MV3 extension; otherwise the configured localhost editor is used.", inputSchema: { type: "object", properties: { extensionId: { type: "string", pattern: "^[a-p]{32}$", description: "Optional installed Chrome extension id." } }, additionalProperties: false } },
   { name: "editor_status", description: "Check the persistent bridge, connected editors, primary canvas and readiness.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
   { name: "select_editor", description: "Select the only editor tab that automation may control by clientId.", inputSchema: { type: "object", properties: { clientId: { type: "string" } }, required: ["clientId"], additionalProperties: false } },
   { name: "get_task", description: "Read a previous request result before retrying after a timeout.", inputSchema: { type: "object", properties: { requestId: { type: "string" } }, required: ["requestId"], additionalProperties: false } },
@@ -56,7 +57,7 @@ const textResult = (value, isError = false) => ({ content: [{ type: "text", text
 
 const callTool = async (name, args) => {
   if (name === "open_editor") {
-    const url = "http://localhost:3000/";
+    const url = args.extensionId ? `chrome-extension://${args.extensionId}/index.html` : EDITOR_URL;
     const command = process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
     const child = spawn(command[0], command[1], { detached: true, stdio: "ignore", windowsHide: true });
     child.unref();

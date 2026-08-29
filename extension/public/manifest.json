@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Pixel Local",
+  "description": "本地优先的营销图片编辑器与可编程设计画布。",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "打开 Pixel Local"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "downloads"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:43127/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://127.0.0.1:43127 ws://127.0.0.1:43127; img-src 'self' data: blob:; font-src 'self' data:"
+  }
+}

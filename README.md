@@ -4,6 +4,26 @@ Pixel Local 是一个本地优先的轻量营销图片编辑器。它在浏览�
 
 普通用户无需 Codex 即可使用。安装配套 Skill 后，Codex 可通过本机 MCP 与 Bridge 读取和修改真实画布，不依赖浏览器鼠标自动化。
 
+## Chrome 扩展版
+
+Pixel Local 可以作为独立的 Chrome Manifest V3 扩展运行，编辑器核心与 localhost 版本共用同一份 React + Fabric.js 源码。
+
+```bash
+npm ci
+npm run build:extension
+npm run doctor:extension
+```
+
+然后打开 `chrome://extensions`，开启“开发者模式”，选择“加载已解压的扩展程序”，加载项目中的 `扩展程序/`。点击扩展图标会打开或聚焦 Pixel Local 全屏编辑器。
+
+- 普通编辑、IndexedDB 保存、图片导入和 PNG/JPG 下载不需要启动 localhost 服务。
+- Codex 自动化是可选能力；需要时继续运行本机 Bridge，并让扩展页面连接 `127.0.0.1:43127`。
+- MCP 的 `open_editor` 支持传入安装后的 `extensionId`；不传时继续打开 localhost 版本，保持向后兼容。
+- localhost 与扩展属于不同浏览器来源，IndexedDB 不共享。首次迁移时先在旧版导出 `.pixel.json`，再到扩展版导入；迁移后回读页面、Frame 和图层数量。
+- 不要频繁更换扩展加载目录或扩展 ID，否则 Chrome 会创建新的扩展存储来源。
+
+实现边界与数据迁移说明见 [Chrome 扩展架构](docs/extension-architecture.md)。
+
 ## 一键执行核心安装
 
 需要 Node.js 22.13 或更高版本、npm 和现代桌面浏览器。

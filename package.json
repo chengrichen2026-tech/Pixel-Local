@@ -18,6 +18,7 @@
   "scripts": {
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "build:extension": "vite build --config vite.extension.config.ts",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "bridge:start": "node tools/pixel-local-bridge/daemon.mjs",
     "bridge:ensure": "node scripts/pixel-local-bridge-process.mjs ensure",
@@ -29,13 +30,14 @@
     "bridge:uninstall": "zsh scripts/pixel-local-bridge-launchd.sh uninstall",
     "setup:codex": "node scripts/pixel-local-setup.mjs",
     "doctor": "node scripts/pixel-local-doctor.mjs",
+    "doctor:extension": "node scripts/pixel-local-extension-doctor.mjs",
     "pixel:verify": "zsh ops/pixel-local/scripts/verify.sh",
     "pixel:skill:check": "zsh ops/pixel-local/scripts/sync-skill.sh --check",
     "pixel:skill:sync": "zsh ops/pixel-local/scripts/sync-skill.sh --apply",
-    "test": "npm run build && node --test tests/*.test.mjs",
+    "test": "npm run build && npm run build:extension && node --test tests/*.test.mjs",
     "test:bridge": "node --test tests/pixel-local-bridge.test.mjs",
     "test:sidebar": "node --test tests/pixel-local-sidebar-command.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern 扩展程序",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
