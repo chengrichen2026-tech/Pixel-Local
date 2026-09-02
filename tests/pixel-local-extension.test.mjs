@@ -38,7 +38,8 @@ test("Pixel Local ships a complete large-letter blue PL icon set", async () => {
   ]);
   assert.match(source, /#217BFE/);
   assert.match(source, />PL<\/text>/);
-  assert.match(source, /font-size="56"/);
+  assert.match(source, /Arial Black/);
+  assert.match(source, /font-size="68"/);
   assert.ok(pngs.every((file) => file.subarray(1, 4).toString() === "PNG"));
 });
 
