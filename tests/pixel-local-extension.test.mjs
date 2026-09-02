@@ -31,13 +31,14 @@ test("ships Pixel Local as a Manifest V3 extension using the shared editor core"
   assert.match(packageJson.scripts.test, /npm run build:extension/);
 });
 
-test("Pixel Local ships a complete blue focus-frame icon set", async () => {
+test("Pixel Local ships a complete large-letter blue PL icon set", async () => {
   const [source, ...pngs] = await Promise.all([
     read("extension/public/icon.svg"),
     ...[16, 32, 48, 128].map((size) => readFile(new URL(`extension/public/icon-${size}.png`, root))),
   ]);
   assert.match(source, /#217BFE/);
-  assert.match(source, /stroke="#fff"/);
+  assert.match(source, />PL<\/text>/);
+  assert.match(source, /font-size="56"/);
   assert.ok(pngs.every((file) => file.subarray(1, 4).toString() === "PNG"));
 });
 
