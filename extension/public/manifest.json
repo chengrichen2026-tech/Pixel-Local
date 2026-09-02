@@ -4,8 +4,10 @@
   "description": "本地优先的营销图片编辑器与可编程设计画布。",
   "version": "0.1.0",
   "action": {
-    "default_title": "打开 Pixel Local"
+    "default_title": "打开 Pixel Local",
+    "default_icon": { "16": "icon-16.png", "32": "icon-32.png", "48": "icon-48.png", "128": "icon-128.png" }
   },
+  "icons": { "16": "icon-16.png", "32": "icon-32.png", "48": "icon-48.png", "128": "icon-128.png" },
   "background": {
     "service_worker": "background.js"
   },

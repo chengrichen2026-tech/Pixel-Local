@@ -19,6 +19,8 @@ test("ships Pixel Local as a Manifest V3 extension using the shared editor core"
 
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.name, "Pixel Local");
+  assert.deepEqual(manifest.action.default_icon, { "16": "icon-16.png", "32": "icon-32.png", "48": "icon-48.png", "128": "icon-128.png" });
+  assert.deepEqual(manifest.icons, manifest.action.default_icon);
   assert.deepEqual(manifest.permissions, ["downloads"]);
   assert.match(manifest.content_security_policy.extension_pages, /ws:\/\/127\.0\.0\.1:43127/);
   assert.match(entry, /import Home from "\.\.\/app\/page"/);
@@ -27,6 +29,16 @@ test("ships Pixel Local as a Manifest V3 extension using the shared editor core"
   assert.match(doctor, /manifest_version must be 3/);
   assert.equal(packageJson.scripts["doctor:extension"], "node scripts/pixel-local-extension-doctor.mjs");
   assert.match(packageJson.scripts.test, /npm run build:extension/);
+});
+
+test("Pixel Local ships a complete blue focus-frame icon set", async () => {
+  const [source, ...pngs] = await Promise.all([
+    read("extension/public/icon.svg"),
+    ...[16, 32, 48, 128].map((size) => readFile(new URL(`extension/public/icon-${size}.png`, root))),
+  ]);
+  assert.match(source, /#217BFE/);
+  assert.match(source, /stroke="#fff"/);
+  assert.ok(pngs.every((file) => file.subarray(1, 4).toString() === "PNG"));
 });
 
 test("MCP can open either localhost or an explicitly selected extension editor", async () => {
