@@ -43,6 +43,23 @@ test("Pixel Local ships a complete large-letter blue PL icon set", async () => {
   assert.ok(pngs.every((file) => file.subarray(1, 4).toString() === "PNG"));
 });
 
+test("README routes ordinary users to the complete Chrome extension guide", async () => {
+  const [readme, guide, ignore] = await Promise.all([
+    read("README.md"),
+    read("PIXEL_LOCAL_EXTENSION_GUIDE.md"),
+    read(".gitignore"),
+  ]);
+  assert.match(readme, /\[Pixel Local Chrome 插件使用说明\]\(PIXEL_LOCAL_EXTENSION_GUIDE\.md\)/);
+  assert.match(readme, /GitHub 仓库提供源码/);
+  assert.match(guide, /npm run build:extension/);
+  assert.match(guide, /chrome:\/\/extensions/);
+  assert.match(guide, /git pull --ff-only origin codex\/update-local-editor/);
+  assert.match(guide, /\.pixel\.json/);
+  assert.match(guide, /扩展 ID/);
+  assert.match(guide, /npm run setup:codex -- --apply/);
+  assert.match(ignore, /\/扩展程序\//);
+});
+
 test("MCP can open either localhost or an explicitly selected extension editor", async () => {
   const server = await read("tools/pixel-local-mcp/server.mjs");
 
