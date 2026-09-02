@@ -22,20 +22,23 @@ export const nodeVersionOk = () => {
 };
 export const dependenciesReady = () => exists(path.join(PROJECT_DIR, "node_modules", "vinext", "package.json"));
 
-export const mcpBlock = () => [
+export const extensionIdFromConfig = (source) => String(source || "").match(/PIXEL_LOCAL_EXTENSION_ID\s*=\s*"([a-p]{32})"/)?.[1] || "";
+export const mcpBlock = (extensionId = "") => [
   "[mcp_servers.pixel-local-editor]",
   'command = "node"',
   `args = [${JSON.stringify(mcpServerPath())}]`,
+  `env = { PIXEL_LOCAL_DEFAULT_TARGET = "extension"${extensionId ? `, PIXEL_LOCAL_EXTENSION_ID = ${JSON.stringify(extensionId)}` : ""} }`,
 ].join("\n");
 
-export const updateMcpConfig = (source) => {
+export const updateMcpConfig = (source, options = {}) => {
   const lines = String(source || "").replace(/\r\n/g, "\n").split("\n");
   const header = "[mcp_servers.pixel-local-editor]";
   const start = lines.findIndex((line) => line.trim() === header);
-  const replacement = mcpBlock().split("\n");
+  const extensionId = options.extensionId || extensionIdFromConfig(source);
+  const replacement = mcpBlock(extensionId).split("\n");
   if (start < 0) {
     const base = lines.join("\n").trimEnd();
-    return `${base}${base ? "\n\n" : ""}${mcpBlock()}\n`;
+    return `${base}${base ? "\n\n" : ""}${mcpBlock(extensionId)}\n`;
   }
   let end = start + 1;
   while (end < lines.length && !/^\s*\[[^\]]+\]\s*$/.test(lines[end])) end += 1;
@@ -64,11 +67,11 @@ export const installSkill = async () => {
   await cp(path.join(PROJECT_DIR, "COMMAND_API.md"), path.join(skillTarget(), "references", "command-api.md"), { force: true });
 };
 
-export const backupAndWriteConfig = async () => {
+export const backupAndWriteConfig = async (options = {}) => {
   const target = configPath();
   const hadConfig = await exists(target);
   const before = hadConfig ? await readFile(target, "utf8") : "";
-  const after = updateMcpConfig(before);
+  const after = updateMcpConfig(before, options);
   if (before === after) return { changed: false, backup: null, target };
   await mkdir(path.dirname(target), { recursive: true });
   let backup = null;

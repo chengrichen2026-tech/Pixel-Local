@@ -2,7 +2,9 @@
 
 Pixel Local 在页面加载完成后暴露 `window.pixelLocal`，供 Codex 或浏览器自动化稳定读取和修改编辑器状态。
 
-Codex 已注册 `$pixel-local-editor` Skill 与独立版 `pixel-local-editor` MCP。编辑器运行于 `http://localhost:3000`，页面通过 WebSocket 自动连接 `127.0.0.1:43127` 常驻 Bridge，可使用 `open_editor`、`editor_status`、`select_editor`、`get_state`、`execute`、`get_task` 和 `export_frame`，无需通过鼠标操作画布。
+Codex 已注册 `$pixel-local-editor` Skill 与独立版 `pixel-local-editor` MCP。默认目标是 Pixel Local Chrome 插件画布；localhost 仅用于显式开发模式。页面通过 WebSocket 自动连接 `127.0.0.1:43127` 常驻 Bridge，可使用 `open_editor`、`editor_status`、`select_editor`、`get_state`、`execute`、`get_task` 和 `export_frame`，无需通过鼠标操作画布。
+
+`open_editor` 默认按“调用参数 `extensionId` → 环境变量 `PIXEL_LOCAL_EXTENSION_ID` → Bridge 当前已连接插件 URL”寻找插件。显式传 `target: "localhost"` 才打开 `PIXEL_LOCAL_EDITOR_URL`。
 
 `get_state` 返回稳定的 `projectId` 和当前 `revision`。所有写操作必须携带：
 

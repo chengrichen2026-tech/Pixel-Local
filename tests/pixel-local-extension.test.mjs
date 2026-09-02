@@ -57,13 +57,18 @@ test("README routes ordinary users to the complete Chrome extension guide", asyn
   assert.match(guide, /\.pixel\.json/);
   assert.match(guide, /扩展 ID/);
   assert.match(guide, /npm run setup:codex -- --apply/);
+  assert.match(guide, /--extension-id/);
+  assert.match(guide, /插件画布是 Codex 的默认目标/);
   assert.match(ignore, /\/扩展程序\//);
 });
 
-test("MCP can open either localhost or an explicitly selected extension editor", async () => {
+test("MCP defaults to a configured or connected extension and keeps localhost explicit", async () => {
   const server = await read("tools/pixel-local-mcp/server.mjs");
 
   assert.match(server, /PIXEL_LOCAL_EDITOR_URL/);
   assert.match(server, /extensionId/);
+  assert.match(server, /PIXEL_LOCAL_DEFAULT_TARGET \|\| "extension"/);
+  assert.match(server, /extensionClients/);
+  assert.match(server, /target !== "localhost"/);
   assert.match(server, /chrome-extension:\/\//);
 });

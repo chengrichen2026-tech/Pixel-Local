@@ -45,10 +45,11 @@ localhost 与扩展拥有不同浏览器 origin，因此 IndexedDB 不共享。�
 
 ## Codex 自动化
 
-扩展页面继续使用原有 WebSocket hello、revision、requestId 和 expectedRevision 协议。MCP `open_editor` 有两种入口：
+扩展页面继续使用原有 WebSocket hello、revision、requestId 和 expectedRevision 协议。MCP `open_editor` 以插件为默认目标：
 
-- 不传 `extensionId`：打开 `PIXEL_LOCAL_EDITOR_URL`，默认仍为 localhost。
-- 传入 `extensionId`：打开 `chrome-extension://<id>/index.html`。
+- 默认：使用 `PIXEL_LOCAL_EXTENSION_ID`，或复用 Bridge 已连接的插件 URL。
+- 显式传入 `extensionId`：打开 `chrome-extension://<id>/index.html`。
+- 显式传入 `target=localhost`：打开 `PIXEL_LOCAL_EDITOR_URL`。
 
 无 Bridge 时，扩展仍可正常手动编辑；界面只显示 Codex 未连接状态。
 

@@ -17,8 +17,8 @@ const main = async () => {
   add("dependencies", await dependenciesReady() ? "ok" : "fail", "Project dependencies", "Run npm ci.");
   add("skill", await skillIsSynchronized() ? "ok" : "fail", "Installed Pixel Local Skill", "Run npm run setup:codex -- --apply.");
   const config = await exists(configPath()) ? await readFile(configPath(), "utf8") : "";
-  const expected = mcpBlock().split("\n");
-  const configOk = expected.every((line) => config.includes(line));
+  const expected = mcpBlock().split("\n").slice(0, 3);
+  const configOk = expected.every((line) => config.includes(line)) && config.includes('PIXEL_LOCAL_DEFAULT_TARGET = "extension"');
   add("mcp-config", configOk ? "ok" : "fail", configPath(), "Run npm run setup:codex -- --apply.");
   add("mcp-server", await exists(mcpServerPath()) ? "ok" : "fail", mcpServerPath(), "Restore the repository checkout.");
   let bridge = await fetchStatus(`${bridgeUrl()}/health`, "json");
@@ -34,9 +34,10 @@ const main = async () => {
   }
   add("bridge", bridge.ok ? "ok" : "fail", bridge.ok ? "Bridge is responding" : "Bridge is not responding", platform() === "darwin" ? "Run npm run bridge:install." : "Run npm run bridge:ensure, or npm run doctor -- --repair.");
   const editor = await editorStatus();
-  add("editor", editor.ok ? "ok" : "fail", editor.ok ? `Pixel Local HTTP ${editor.status}` : "Pixel Local editor is not responding or the port belongs to another service", "Run npm run dev.");
-  const ready = Boolean(bridge.ok && bridge.body?.ready && bridge.body?.connectedClients?.length);
-  add("canvas", ready ? "ok" : "fail", ready ? `${bridge.body.connectedClients.length} connected editor(s); primary=${Boolean(bridge.body.primaryClientId)}` : "No ready editor canvas is connected", "Open the editor page and select the primary canvas.");
+  add("localhost-editor", editor.ok ? "ok" : "manual", editor.ok ? `Development editor HTTP ${editor.status}` : "Development localhost editor is not running; this is optional in extension-first mode.", "Run npm run dev only for localhost development.");
+  const extensionClients = (bridge.body?.connectedClients || []).filter((client) => client.ready && String(client.url || "").startsWith("chrome-extension://"));
+  const ready = Boolean(bridge.ok && extensionClients.length && extensionClients.some((client) => client.primary));
+  add("canvas", ready ? "ok" : "fail", ready ? `${extensionClients.length} connected extension canvas(es); primary extension selected` : "No ready Pixel Local extension canvas is connected", "Open the PL Chrome extension and select it as the primary canvas.");
   add("codex-tools", "manual", "Tool mounting can only be confirmed inside a newly opened Codex task.", "Create a new task, then call editor_status and get_state.");
   const ok = !checks.some((check) => check.status === "fail");
   if (jsonOutput) console.log(JSON.stringify({ ok, checks }, null, 2));

@@ -6,14 +6,17 @@ import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import {
   PROJECT_DIR, backupAndWriteConfig, configPath, dependenciesReady,
-  editorStatus, editorUrl, installSkill, nodeVersionOk, platform, skillIsSynchronized, skillTarget,
+  bridgeUrl, editorStatus, editorUrl, fetchStatus, installSkill, nodeVersionOk, platform, skillIsSynchronized, skillTarget,
 } from "./pixel-local-install-lib.mjs";
 import { ensureManagedBridge } from "./pixel-local-bridge-process.mjs";
 
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
 const apply = args.has("--apply");
+const extensionIdArg = argv.find((value) => value.startsWith("--extension-id="))?.split("=")[1] || (argv.includes("--extension-id") ? argv[argv.indexOf("--extension-id") + 1] : "");
+if (extensionIdArg && !/^[a-p]{32}$/.test(extensionIdArg)) throw new Error("--extension-id must be the 32-letter Chrome extension id.");
 if (args.has("--help")) {
-  console.log("Usage: npm run setup:codex -- [--apply]\nDefault is dry-run; --apply installs dependencies, Skill, MCP config and local services.");
+  console.log("Usage: npm run setup:codex -- [--apply] [--extension-id <id>] [--with-localhost]\nThe Chrome extension is the default editor; --with-localhost also starts the development server.");
   process.exit(0);
 }
 
@@ -48,23 +51,26 @@ const main = async () => {
   console.log(`Skill target: ${skillTarget()}${await skillIsSynchronized() ? " (already synchronized)" : ""}`);
   console.log(`MCP config: ${configPath()}`);
   console.log(`Bridge: ${platform() === "darwin" ? "macOS LaunchAgent" : "project-managed background process"}`);
-  console.log(`Editor: ${editorUrl()}`);
+  console.log(`Default editor: Chrome extension${extensionIdArg ? ` (${extensionIdArg})` : " (discover from connected PL canvas)"}`);
   if (!apply) {
     console.log("No changes made. Re-run with --apply to install.");
     return;
   }
   if (!dependencies && process.env.PIXEL_LOCAL_SKIP_DEPENDENCIES !== "1") run(npmCommand, ["ci"]);
   await installSkill();
-  const config = await backupAndWriteConfig();
+  const config = await backupAndWriteConfig({ extensionId: extensionIdArg });
   console.log(config.changed ? `MCP config updated${config.backup ? `; backup: ${config.backup}` : ""}.` : "MCP config already current.");
-  if (platform() === "darwin" && process.env.PIXEL_LOCAL_SKIP_SERVICE !== "1") run("zsh", ["scripts/pixel-local-bridge-launchd.sh", "install"]);
+  const bridgeHealthy = (await fetchStatus(`${bridgeUrl()}/health`, "json")).ok;
+  if (platform() === "darwin" && process.env.PIXEL_LOCAL_SKIP_SERVICE !== "1" && !bridgeHealthy) run("zsh", ["scripts/pixel-local-bridge-launchd.sh", "install"]);
+  else if (platform() === "darwin" && bridgeHealthy) console.log("Bridge already healthy; existing LaunchAgent reused.");
   else if (platform() !== "darwin" && process.env.PIXEL_LOCAL_SKIP_BRIDGE !== "1") {
     const bridge = await ensureManagedBridge();
     console.log(bridge.started ? `Bridge started in background (PID ${bridge.pid}); log: ${bridge.logFile}` : "Bridge already healthy; no duplicate process started.");
   }
   else if (platform() !== "darwin") console.log("Bridge background start skipped by environment.");
   else console.log("Bridge service installation skipped by environment.");
-  console.log(`Editor ${await startEditor()}.`);
+  if (args.has("--with-localhost")) console.log(`Development editor ${await startEditor()}.`);
+  else console.log("Development localhost editor skipped; open the PL Chrome extension.");
   console.log("Installation files are ready. Close and reopen Codex or create a new Codex task, then run: npm run doctor");
   console.log("The final in-task check is editor_status followed by get_state on the real canvas.");
 };

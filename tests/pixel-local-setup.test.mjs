@@ -57,6 +57,7 @@ test("apply backs up config, installs Skill and remains idempotent", async () =>
   assert.equal(first.code, 0, first.stderr);
   const configured = await readFile(fixture.config, "utf8");
   assert.match(configured, /\[mcp_servers\.pixel-local-editor\]/);
+  assert.match(configured, /PIXEL_LOCAL_DEFAULT_TARGET = "extension"/);
   assert.match(configured, /theme = "dark"/);
   assert.match(configured, /\[features\]\napps = true/);
   assert.doesNotMatch(configured, /old-node|old-server/);
@@ -69,6 +70,37 @@ test("apply backs up config, installs Skill and remains idempotent", async () =>
   assert.equal(await readFile(fixture.config, "utf8"), configured);
   const backupsAfterSecond = (await readdir(path.dirname(fixture.config))).filter((name) => name.includes(".backup-"));
   assert.deepEqual(backupsAfterSecond, backupsAfterFirst);
+});
+
+test("setup stores and preserves the default Chrome extension id", async () => {
+  const fixture = await isolatedEnv();
+  await writeFile(fixture.config, "[ui]\ntheme = \"dark\"\n");
+  const extensionId = "abcdefghijklmnopabcdefghijklmnop";
+  const first = await run(setupScript, ["--apply", "--extension-id", extensionId], fixture.env);
+  assert.equal(first.code, 0, first.stderr);
+  const configured = await readFile(fixture.config, "utf8");
+  assert.match(configured, new RegExp(`PIXEL_LOCAL_EXTENSION_ID = "${extensionId}"`));
+  const second = await run(setupScript, ["--apply"], fixture.env);
+  assert.equal(second.code, 0, second.stderr);
+  assert.equal(await readFile(fixture.config, "utf8"), configured);
+});
+
+test("setup reuses a healthy macOS Bridge instead of reinstalling its LaunchAgent", async () => {
+  const fixture = await isolatedEnv();
+  const bridge = http.createServer((_request, response) => {
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(JSON.stringify({ ok: true, ready: false, connectedClients: [] }));
+  });
+  bridge.listen(0, "127.0.0.1"); await once(bridge, "listening");
+  const result = await run(setupScript, ["--apply"], {
+    ...fixture.env,
+    PIXEL_LOCAL_PLATFORM: "darwin",
+    PIXEL_LOCAL_SKIP_SERVICE: "0",
+    PIXEL_LOCAL_BRIDGE_URL: `http://127.0.0.1:${bridge.address().port}`,
+  });
+  bridge.close();
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(result.stdout, /Bridge already healthy; existing LaunchAgent reused/);
 });
 
 test("doctor distinguishes failed installation from a ready canvas", async () => {
@@ -90,7 +122,7 @@ test("doctor distinguishes failed installation from a ready canvas", async () =>
   assert.equal(applied.code, 0, applied.stderr);
   const bridge = http.createServer((request, response) => {
     response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify({ ok: true, ready: true, primaryClientId: "primary", connectedClients: [{ clientId: "primary" }] }));
+    response.end(JSON.stringify({ ok: true, ready: true, primaryClientId: "primary", connectedClients: [{ clientId: "primary", primary: true, ready: true, url: "chrome-extension://abcdefghijklmnopabcdefghijklmnop/index.html" }] }));
   });
   const editor = http.createServer((_request, response) => { response.writeHead(200); response.end("Pixel Local"); });
   bridge.listen(0, "127.0.0.1"); editor.listen(0, "127.0.0.1");

@@ -26,7 +26,7 @@ npm run doctor:extension
 
 - 普通编辑、IndexedDB 保存、图片导入和 PNG/JPG 下载不需要启动 localhost 服务。
 - Codex 自动化是可选能力；需要时继续运行本机 Bridge，并让扩展页面连接 `127.0.0.1:43127`。
-- MCP 的 `open_editor` 支持传入安装后的 `extensionId`；不传时继续打开 localhost 版本，保持向后兼容。
+- MCP 默认操作和打开 Chrome 插件画布；`open_editor` 会使用已配置的扩展 ID，或复用 Bridge 当前已连接的插件 URL。只有显式传入 `target=localhost` 时才打开开发服务器。
 - localhost 与扩展属于不同浏览器来源，IndexedDB 不共享。首次迁移时先在旧版导出 `.pixel.json`，再到扩展版导入；迁移后回读页面、Frame 和图层数量。
 - 不要频繁更换扩展加载目录或扩展 ID，否则 Chrome 会创建新的扩展存储来源。
 
@@ -43,7 +43,15 @@ npm run setup:codex
 npm run setup:codex -- --apply
 ```
 
-第一条安装命令是 dry-run，只显示即将执行的操作；只有带 `--apply` 的命令才会安装依赖、同步 Skill、备份并更新 Codex MCP 配置，以及启动本地能力。
+第一条安装命令是 dry-run，只显示即将执行的操作；只有带 `--apply` 的命令才会安装依赖、同步 Skill、备份并更新 Codex MCP 配置，以及启动 Bridge。插件画布是默认入口，localhost 开发服务器不会自动启动。
+
+如需让 Codex 在插件尚未打开时也能直接打开它，可把 `chrome://extensions` 中显示的 32 位扩展 ID 写入配置：
+
+```bash
+npm run setup:codex -- --apply --extension-id <你的扩展ID>
+```
+
+只有开发 localhost 版本时才添加 `--with-localhost`。
 
 安装完成后关闭并重新打开 Codex，或新建一个 Codex 任务，再运行：
 

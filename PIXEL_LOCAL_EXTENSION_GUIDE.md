@@ -95,7 +95,17 @@ npm run setup:codex -- --apply
 npm run doctor
 ```
 
-第一条命令是 dry-run；带 `--apply` 后才会安装和配置本机 Bridge、MCP 与 Skill。重新打开 Codex 或创建新任务后，应通过 `editor_status` 和 `get_state` 回读真实画布，不能只用安装成功或 Bridge 启动作为完成依据。
+第一条命令是 dry-run；带 `--apply` 后才会安装和配置本机 Bridge、MCP 与 Skill。插件画布是 Codex 的默认目标，不会自动启动 localhost 开发服务器。
+
+建议在 `chrome://extensions` 的 Pixel Local 详情中复制 32 位扩展 ID，再执行：
+
+```bash
+npm run setup:codex -- --apply --extension-id <你的扩展ID>
+```
+
+配置 ID 后，即使插件页面尚未打开，Codex 的 `open_editor` 也能直接打开它。未配置 ID 时，先手动点击一次工具栏 `PL` 图标；之后 `open_editor` 会复用 Bridge 已连接的插件地址。只有开发网页版本时才使用 `open_editor target=localhost` 或安装参数 `--with-localhost`。
+
+重新打开 Codex 或创建新任务后，应通过 `editor_status` 和 `get_state` 回读真实插件画布，不能只用安装成功或 Bridge 启动作为完成依据。
 
 ## 8. 常见问题
 
