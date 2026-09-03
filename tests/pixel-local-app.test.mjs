@@ -22,7 +22,25 @@ test("ships the Pixel Local editor instead of starter UI", async () => {
 
 test("keeps private and generated assets outside the release scope", async () => {
   const ignore = await readFile(new URL(".gitignore", root), "utf8");
-  for (const entry of ["/.pixel-qa/", "/.recovery-backups/", "/public/imports/", "/public/template-assets/", "/*.pixel.json"]) {
+  for (const entry of ["/.pixel-qa/", "/.recovery-backups/", "/public/imports/", "/public/template-assets/", "/public/runs/", "/视觉方案探索/", "/*.pixel.json"]) {
     assert.match(ignore, new RegExp(entry.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
+});
+
+test("anchors Frame helper overlays to scene coordinates during multi-selection", async () => {
+  const page = await readFile(new URL("app/page.tsx", root), "utf8");
+
+  assert.match(page, /const frameSceneBounds = \(frame: ObjectMeta\) => frame\.getBoundingRect\(\)/);
+  assert.match(page, /const frameBounds = frameSceneBounds\(frame\)/);
+  assert.doesNotMatch(page, /outline\.set\(\{ left: frame\.left, top: frame\.top/);
+});
+
+test("keeps large Frame selections from serializing transient helper objects", async () => {
+  const page = await readFile(new URL("app/page.tsx", root), "utf8");
+
+  assert.match(page, /const FRAME_SELECTION_OUTLINE_LIMIT = 12/);
+  assert.match(page, /selectedFrames\.length > FRAME_SELECTION_OUTLINE_LIMIT/);
+  assert.match(page, /if \(!target \|\| isTransientObject\(target as ObjectMeta\)\) return/);
+  assert.doesNotMatch(page, /canvas\.on\("object:added", \(\) => commit\(\)\)/);
+  assert.doesNotMatch(page, /canvas\.on\("object:removed", \(\) => commit\(\)\)/);
 });

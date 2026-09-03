@@ -49,6 +49,8 @@ yarn-error.log*
 /design-qa.md
 /public/imports/
 /public/template-assets/
+/public/runs/
+/视觉方案探索/
 /scripts/create_durex_template_assets.mjs
 
 # unused starter examples are not part of the distributable editor

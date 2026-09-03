@@ -13,6 +13,7 @@ type LocalFontData = LocalFontMetadata & { blob: () => Promise<Blob> };
 type FontVariant = { fontStyle: string; fontWeight: number; key: string; label: string };
 type PixelProjectFile = { format: "pixel-local"; version: 1; exportedAt: string; pages: EditorPage[]; activePageId: string; canvas: unknown };
 type PixelLocalCommand = { op: string; id?: string; pageId?: string; frameId?: string; name?: string; [key: string]: unknown };
+const FRAME_SELECTION_OUTLINE_LIMIT = 12;
 type PixelLocalSnapshot = { version: 1; activePageId: string; pages: EditorPage[]; objects: Array<Record<string, unknown>>; sidebar: { collapsedFrameIds: string[] } };
 type PixelLocalCommandResult = { ok: boolean; changedIds: string[]; warnings: string[]; snapshot: PixelLocalSnapshot; data?: Record<string, unknown>; error?: string };
 type PixelLocalApi = { version: 1; getState: () => Promise<PixelLocalSnapshot>; execute: (commands: PixelLocalCommand | PixelLocalCommand[]) => Promise<PixelLocalCommandResult> };
@@ -224,6 +225,9 @@ export default function Home() {
   const frames = () => editor.current?.getObjects().filter((item) => { const meta = item as ObjectMeta; return !isTransientObject(meta) && meta.kind === "frame" && (meta.pageId || DEFAULT_PAGE_ID) === activePageIdRef.current; }) as ObjectMeta[] || [];
   const frameDesignWidth = (frame: ObjectMeta) => Math.round((frame.width || 0) * (frame.scaleX || 1));
   const frameDesignHeight = (frame: ObjectMeta) => Math.round((frame.height || 0) * (frame.scaleY || 1));
+  // ActiveSelection temporarily stores members in selection-local coordinates.
+  // Scene bounds keep visual helpers attached to the real Frame while multi-selecting.
+  const frameSceneBounds = (frame: ObjectMeta) => frame.getBoundingRect();
   const objectDesignWidth = (object: ObjectMeta) => object.kind === "frame" ? frameDesignWidth(object) : Math.round(object.getScaledWidth());
   const objectDesignHeight = (object: ObjectMeta) => object.kind === "frame" ? frameDesignHeight(object) : Math.round(object.getScaledHeight());
   const applyObjectSelectionStyle = (object: FabricObject) => object.set({ borderColor: "#6f3cff", borderScaleFactor: 1.4, cornerColor: "#fbfcff", cornerStrokeColor: "#6f3cff", cornerSize: 10, transparentCorners: false });
@@ -470,14 +474,15 @@ export default function Home() {
     const zoom = Math.max(MIN_CANVAS_ZOOM, canvas.getZoom());
     const labelFontSize = 12 / zoom;
     const labelOffset = 8 / zoom;
+    const frameBounds = frameSceneBounds(frame);
     let label = canvas.getObjects().find((item) => {
       const meta = item as ObjectMeta;
       return meta.kind === "frame-label" && meta.frameId === frame.id;
     }) as (FabricText & ObjectMeta) | undefined;
     if (!label) {
       label = new FabricText(frame.name || "Frame", {
-        left: frame.left,
-        top: frame.top - labelOffset,
+        left: frameBounds.left,
+        top: frameBounds.top - labelOffset,
         fontSize: labelFontSize,
         fontFamily: "Inter",
         fontWeight: 600,
@@ -507,7 +512,7 @@ export default function Home() {
     }
     label.pageId = frame.pageId;
     const fullLabel = frame.name || "Frame";
-    const maxLabelWidth = Math.max(24 / zoom, frameDesignWidth(frame) - 8 / zoom);
+    const maxLabelWidth = Math.max(24 / zoom, frameBounds.width - 8 / zoom);
     const characters = Array.from(fullLabel);
     const measureLabel = (text: string) => { label!.set({ text, fontSize: labelFontSize, scaleX: 1, scaleY: 1 }); label!.initDimensions(); return label!.getScaledWidth(); };
     let displayLabel = fullLabel;
@@ -522,8 +527,8 @@ export default function Home() {
     }
     label.set({
       text: displayLabel,
-      left: frame.left,
-      top: frame.top - labelOffset,
+      left: frameBounds.left,
+      top: frameBounds.top - labelOffset,
       fontSize: labelFontSize,
       scaleX: 1,
       scaleY: 1,
@@ -576,16 +581,24 @@ export default function Home() {
     if (!canvas) return;
     const existing = canvas.getObjects().filter((item) => (item as ObjectMeta).kind === "frame-selection-outline") as (Rect & ObjectMeta)[];
     const selectedFrames = canvas.getActiveObjects().filter((item) => (item as ObjectMeta).kind === "frame") as ObjectMeta[];
+    // A large ActiveSelection already draws one aggregate selection box. Adding an
+    // outline for every Frame wastes GPU/renderer work and used to trigger one
+    // full project serialization per transient outline.
+    if (selectedFrames.length > FRAME_SELECTION_OUTLINE_LIMIT) {
+      existing.forEach((outline) => canvas.remove(outline));
+      return;
+    }
     const selectedIds = new Set(selectedFrames.map((frame) => frame.id));
     existing.filter((outline) => !selectedIds.has(outline.frameId)).forEach((outline) => canvas.remove(outline));
     selectedFrames.forEach((frame) => {
+      const frameBounds = frameSceneBounds(frame);
       let outline = existing.find((item) => item.frameId === frame.id);
       if (!outline) {
         outline = new Rect({
-        left: frame.left,
-        top: frame.top,
-        width: frameDesignWidth(frame),
-        height: frameDesignHeight(frame),
+        left: frameBounds.left,
+        top: frameBounds.top,
+        width: frameBounds.width,
+        height: frameBounds.height,
         originX: "left",
         originY: "top",
         fill: "rgba(111,60,255,.09)",
@@ -608,7 +621,7 @@ export default function Home() {
         });
         canvas.add(outline);
       } else {
-        outline.set({ left: frame.left, top: frame.top, width: frameDesignWidth(frame), height: frameDesignHeight(frame), visible: frame.visible && !frame.hidden, dirty: true });
+        outline.set({ left: frameBounds.left, top: frameBounds.top, width: frameBounds.width, height: frameBounds.height, visible: frame.visible && !frame.hidden, dirty: true });
         outline.setCoords();
       }
       canvas.bringObjectToFront(outline);
@@ -1325,8 +1338,12 @@ export default function Home() {
       commit();
     };
     canvas.on("object:modified", afterChange);
-    canvas.on("object:added", () => commit());
-    canvas.on("object:removed", () => commit());
+    const commitPersistentCanvasMutation = ({ target }: { target?: FabricObject }) => {
+      if (!target || isTransientObject(target as ObjectMeta)) return;
+      commit();
+    };
+    canvas.on("object:added", commitPersistentCanvasMutation);
+    canvas.on("object:removed", commitPersistentCanvasMutation);
     let normalizingFrameSelection = false;
     const refreshSelection = () => {
       const active = canvas.getActiveObject();
